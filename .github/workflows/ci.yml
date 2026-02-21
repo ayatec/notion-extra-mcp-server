@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  release:
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Check for changesets
+        id: changesets
+        run: |
+          CHANGESETS=$(find .changeset -name '*.md' ! -name 'README.md' 2>/dev/null || true)
+          if [ -n "$CHANGESETS" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Version and commit
+        if: steps.changesets.outputs.found == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          pnpm changeset version
+          git add -A
+          git commit -m "chore: バージョンアップ [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if publish needed
+        id: publish
+        run: |
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED=$(npm view @ayatec/notion-extra-mcp-server version 2>/dev/null || echo "")
+          if [ "$LOCAL_VERSION" != "$PUBLISHED" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "version=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup npm for trusted publishing
+        if: steps.publish.outputs.needed == 'true'
+        run: |
+          npm install -g npm@latest
+          npm config set //registry.npmjs.org/:_authToken ""
+          echo "npm version: $(npm --version)"
+
+      - name: Build and publish
+        if: steps.publish.outputs.needed == 'true'
+        run: |
+          pnpm build
+          npm publish --access public --provenance
