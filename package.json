@@ -1,0 +1,84 @@
+{
+  "name": "@ayatec/notion-extra-mcp-server",
+  "version": "0.1.0",
+  "description": "公式Notion MCPサーバーを補完するMCPサーバー。データベースクエリ、スキーマ管理、一括操作を提供",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "notion-extra-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "dev:tool": "tsx scripts/test-tool.ts",
+    "clean": "rm -rf dist",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
+  },
+  "keywords": [
+    "mcp",
+    "notion",
+    "notion-api",
+    "data-sources",
+    "database",
+    "schema"
+  ],
+  "author": "ayatec",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ayatec/notion-extra-mcp-server.git"
+  },
+  "homepage": "https://github.com/ayatec/notion-extra-mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/ayatec/notion-extra-mcp-server/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "packageManager": "pnpm@10.15.1",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.29.8",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.3.0",
+    "dotenv": "^17.3.1",
+    "eslint": "^10.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0",
+    "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "overrides": {
+      "@typescript-eslint/typescript-estree>minimatch": "^10.2.2"
+    }
+  }
+}
