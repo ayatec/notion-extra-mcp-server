@@ -1,5 +1,11 @@
 # @ayatec/notion-extra-mcp-server
 
+## 0.2.1
+
+### Patch Changes
+
+- [`2adc123`](https://github.com/ayatec/notion-extra-mcp-server/commit/2adc123dce11b3735b8b19a4a27785df089fd1db) Thanks [@ayatec](https://github.com/ayatec)! - Node.js 22→24、pnpm 10.15→10.32 にアップグレード。依存パッケージを最新版に更新
+
 ## 0.2.0
 
 ### Minor Changes
