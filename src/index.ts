@@ -13,6 +13,14 @@ import {
   archivePageHandler,
   batchUpdatePagesTool,
   batchUpdatePagesHandler,
+  findByUniqueIdTool,
+  findByUniqueIdHandler,
+  modifyRelationTool,
+  modifyRelationHandler,
+  appendContentTool,
+  appendContentHandler,
+  batchFetchPagesTool,
+  batchFetchPagesHandler,
 } from './tools/index.js';
 
 const server = new McpServer({
@@ -21,46 +29,25 @@ const server = new McpServer({
 });
 
 // ツール登録
-server.registerTool(
-  queryDatabaseTool.name,
-  {
-    description: queryDatabaseTool.description,
-    inputSchema: queryDatabaseTool.paramsSchema,
-  },
-  queryDatabaseHandler,
-);
-server.registerTool(
-  getDataSourceSchemaTool.name,
-  {
-    description: getDataSourceSchemaTool.description,
-    inputSchema: getDataSourceSchemaTool.paramsSchema,
-  },
-  getDataSourceSchemaHandler,
-);
-server.registerTool(
-  updateDataSourceSchemaTool.name,
-  {
-    description: updateDataSourceSchemaTool.description,
-    inputSchema: updateDataSourceSchemaTool.paramsSchema,
-  },
-  updateDataSourceSchemaHandler,
-);
-server.registerTool(
-  archivePageTool.name,
-  {
-    description: archivePageTool.description,
-    inputSchema: archivePageTool.paramsSchema,
-  },
-  archivePageHandler,
-);
-server.registerTool(
-  batchUpdatePagesTool.name,
-  {
-    description: batchUpdatePagesTool.description,
-    inputSchema: batchUpdatePagesTool.paramsSchema,
-  },
-  batchUpdatePagesHandler,
-);
+const tools = [
+  { tool: queryDatabaseTool, handler: queryDatabaseHandler },
+  { tool: getDataSourceSchemaTool, handler: getDataSourceSchemaHandler },
+  { tool: updateDataSourceSchemaTool, handler: updateDataSourceSchemaHandler },
+  { tool: archivePageTool, handler: archivePageHandler },
+  { tool: batchUpdatePagesTool, handler: batchUpdatePagesHandler },
+  { tool: findByUniqueIdTool, handler: findByUniqueIdHandler },
+  { tool: modifyRelationTool, handler: modifyRelationHandler },
+  { tool: appendContentTool, handler: appendContentHandler },
+  { tool: batchFetchPagesTool, handler: batchFetchPagesHandler },
+];
+
+for (const { tool, handler } of tools) {
+  server.registerTool(
+    tool.name,
+    { description: tool.description, inputSchema: tool.paramsSchema },
+    handler,
+  );
+}
 
 async function main() {
   if (!process.env.NOTION_TOKEN) {

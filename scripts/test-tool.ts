@@ -14,6 +14,14 @@ import {
   archivePageSchema,
   batchUpdatePagesHandler,
   batchUpdatePagesSchema,
+  findByUniqueIdHandler,
+  findByUniqueIdSchema,
+  modifyRelationHandler,
+  modifyRelationSchema,
+  appendContentHandler,
+  appendContentSchema,
+  batchFetchPagesHandler,
+  batchFetchPagesSchema,
 } from '../src/tools/index.js';
 
 type ToolParams = Record<string, unknown>;
@@ -51,6 +59,30 @@ const tools: Record<string, { handler: ToolHandler; schema: ZodObject<ZodRawShap
     handler: batchUpdatePagesHandler as any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     schema: batchUpdatePagesSchema as any,
+  },
+  find_by_unique_id: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: findByUniqueIdHandler as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: findByUniqueIdSchema as any,
+  },
+  modify_relation: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: modifyRelationHandler as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: modifyRelationSchema as any,
+  },
+  append_content: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: appendContentHandler as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: appendContentSchema as any,
+  },
+  batch_fetch_pages: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: batchFetchPagesHandler as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    schema: batchFetchPagesSchema as any,
   },
 };
 
