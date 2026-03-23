@@ -22,4 +22,5 @@ export interface BatchUpdateSummary {
   succeeded: number;
   failed: number;
   results: BatchUpdateResult[];
+  guidance?: string;
 }

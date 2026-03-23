@@ -1,9 +1,15 @@
 import { z } from 'zod';
 import { notionRequest } from '../lib/notion-client.js';
+import { formatNotionError } from '../utils/error-guidance.js';
 import type { ToolResponse } from '../types/index.js';
 
 export const archivePageSchema = z.object({
-  page_id: z.string().min(1).describe('アーカイブするページのID'),
+  page_id: z
+    .string()
+    .min(1)
+    .describe(
+      'Page ID to archive. Get from query-database or find-by-unique-id results (id field), or official Notion MCP.',
+    ),
 });
 
 export async function archivePageHandler(
@@ -21,7 +27,7 @@ export async function archivePageHandler(
       content: [
         {
           type: 'text',
-          text: `Notion API error (${result.status}): [${result.code}] ${result.message}`,
+          text: formatNotionError(result.status, result.code, result.message),
         },
       ],
       isError: true,
@@ -36,6 +42,6 @@ export async function archivePageHandler(
 export const archivePageTool = {
   name: 'archive-page',
   description:
-    'ページをアーカイブ（ゴミ箱に移動）。archive専用の簡便なツール。公式MCPの notion-update-page で archived: true を設定するのと同等だが、単一パラメータで明示的にアーカイブ操作を行える。データベース行の削除にも使用可能（Notionのデータベース行はページ）。復元はNotion UIから可能。永久削除はAPIでは不可。',
+    'Archive a page (move to trash). Database rows are pages, so this works for deleting rows too. When to use: archive 1 page→this tool / bulk property update→batch-update-pages (cannot archive via batch-update-pages). Restore via Notion UI. Permanent deletion not available via API.',
   paramsSchema: archivePageSchema.shape,
 };

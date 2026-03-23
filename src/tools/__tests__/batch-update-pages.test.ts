@@ -61,7 +61,7 @@ describe('batch-update-pages', () => {
       expect(result).not.toHaveProperty('isError');
     });
 
-    it('部分失敗時に isError: true を返す', async () => {
+    it('部分失敗時は isError にならない（成功分のデータは有効）', async () => {
       mockNotionRequest.mockResolvedValueOnce({ ok: true, data: {} }).mockResolvedValueOnce({
         ok: false,
         status: 404,
@@ -81,7 +81,9 @@ describe('batch-update-pages', () => {
       expect(summary.succeeded).toBe(1);
       expect(summary.failed).toBe(1);
       expect(summary.results[1].error).toContain('object_not_found');
-      expect(result).toHaveProperty('isError', true);
+      expect(summary.guidance).toBeDefined();
+      // 部分的成功の場合は isError にならない
+      expect(result).not.toHaveProperty('isError');
     });
 
     it('全失敗時に isError: true を返す', async () => {

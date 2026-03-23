@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { notionRequest } from '../lib/notion-client.js';
+import { formatNotionError } from '../utils/error-guidance.js';
 import type { ToolResponse } from '../types/index.js';
 
 export const getDataSourceSchemaSchema = z.object({
@@ -7,7 +8,7 @@ export const getDataSourceSchemaSchema = z.object({
     .string()
     .min(1)
     .describe(
-      'データソースID。公式Notion MCPの notion-fetch でデータベースを取得し、レスポンスの data_sources 配列から data_source_id を取得できる。database_id とは異なるIDなので注意。',
+      'Data source ID. Get it from notion-fetch response: data_sources[].data_source_id. Note: this is NOT the database_id.',
     ),
 });
 
@@ -25,7 +26,7 @@ export async function getDataSourceSchemaHandler(
       content: [
         {
           type: 'text',
-          text: `Notion API error (${result.status}): [${result.code}] ${result.message}`,
+          text: formatNotionError(result.status, result.code, result.message),
         },
       ],
       isError: true,
@@ -40,6 +41,6 @@ export async function getDataSourceSchemaHandler(
 export const getDataSourceSchemaTool = {
   name: 'get-data-source-schema',
   description:
-    'データソースのスキーマ（プロパティ一覧と型情報）を取得。公式Notion MCPにはスキーマ取得ツールがないため、プロパティの型・選択肢・IDを確認するにはこのツールを使用する。query-databaseでフィルタやソートを使う場合は、まずこのツールでプロパティ名・型・選択肢を確認すること。select/multi_selectのオプション一覧、プロパティID、relation先データベース等の情報を含む。',
+    'Get data source schema (property list, types, select/multi_select options). When to use: check property names/types/options→this tool / modify schema→update-data-source-schema. Use this before building filters/sorts for query-database. Response includes property IDs, relation target database IDs, formula/rollup config.',
   paramsSchema: getDataSourceSchemaSchema.shape,
 };
