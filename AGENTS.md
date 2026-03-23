@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-公式 Notion MCP サーバーを補完する MCP サーバー。データベースクエリ、スキーマ管理、一括操作を提供。
+公式 Notion MCP サーバーを補完する MCP サーバー。データベースクエリ、スキーマ管理、一括操作、リレーション管理、コンテンツ追記を提供。
 
 ## 開発コマンド
 
@@ -26,14 +26,18 @@ pnpm format:check   # フォーマットチェック
 
 ```
 src/
-  config.ts              # 環境変数・サーバー設定
+  config.ts              # サーバー設定（package.json からバージョン取得）
   index.ts               # エントリポイント
   types/                 # 型定義
   lib/                   # Notion API クライアント
     __tests__/           # lib のユニットテスト
-  tools/                 # MCPツール（5ツール）
+  tools/                 # MCPツール（9ツール）
     __tests__/           # tools のユニットテスト
-  utils/                 # ユーティリティ（rate-limiter）
+  utils/                 # ユーティリティ
+    compact.ts           # プロパティフラット化（compact モード）
+    schema.ts            # スキーマ取得・プロパティ名→ID変換
+    error-guidance.ts    # エラーガイダンス生成
+    rate-limiter.ts      # レートリミッター
 scripts/
   test-tool.ts           # ローカルテスト用CLI
 .changeset/              # Changesets 設定・changeset ファイル
@@ -42,19 +46,24 @@ scripts/
 
 ### 提供ツール
 
-1. **query-database** — データソースをフィルター・ソート付きでクエリ。ページネーション対応
+1. **query-database** — データソースをフィルター・ソート付きでクエリ。compact モード、count モード、filter_properties の名前指定に対応
 2. **get-data-source-schema** — データソースのスキーマ（プロパティ一覧と型情報）を取得
 3. **update-data-source-schema** — データベースのスキーマ（プロパティ定義）を更新
 4. **archive-page** — ページをアーカイブ（ゴミ箱に移動）
 5. **batch-update-pages** — 複数ページのプロパティを一括更新（最大50件、レート制限対応）
+6. **find-by-unique-id** — unique_id（自動採番ID）でページを1件検索。compact/include_content対応
+7. **modify-relation** — リレーションプロパティの追加・削除。既存値を保持した差分更新
+8. **append-content** — Markdown APIでページ末尾にコンテンツを追記
+9. **batch-fetch-pages** — 複数ページの詳細を一括取得（最大50件）。compact/include_content対応
 
 ### Notion API
 
 - **ベースURL**: `https://api.notion.com/v1`
 - **APIバージョン**: `2025-09-03`
-- **Data Sources API**: query-database, get-data-source-schema で使用
-- **Database API**: update-data-source-schema で使用（`/v1/databases/{id}`）
-- **Pages API**: archive-page, batch-update-pages で使用
+- **Data Sources API**: query-database, get-data-source-schema, find-by-unique-id で使用
+- **Data Sources API（更新）**: update-data-source-schema で使用
+- **Pages API**: archive-page, batch-update-pages, modify-relation, batch-fetch-pages で使用
+- **Pages Markdown API**: append-content, find-by-unique-id（include_content）, batch-fetch-pages（include_content）で使用
 
 ### 環境変数
 
@@ -66,6 +75,7 @@ scripts/
 - **テスト配置**: `src/**/__tests__/*.test.ts`
 - **ビルド除外**: `tsconfig.json` で `__tests__` を exclude（dist に含まれない）
 - **API モック**: notion-client モジュールを `vi.mock` でモック。実際の API 呼び出しは行わない
+- **RateLimiter モック**: batch 系・count モードのテストでは RateLimiter をモックして即座に通過させる
 
 ## CI/CD
 

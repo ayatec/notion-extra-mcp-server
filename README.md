@@ -5,22 +5,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 公式 Notion MCP サーバーを補完する MCP サーバー。
-データベースクエリ、スキーマ管理、一括操作など、公式サーバーにない 5 つのツールを提供します。
+データベースクエリ、スキーマ管理、一括操作、リレーション管理、コンテンツ追記など 9 つのツールを提供します。
 
 ## 提供ツール
 
 ### `query-database` -- データソースクエリ
 
-データソースをフィルター・ソート付きでクエリします。
+データソースをフィルター・ソート付きでクエリします。compact モードでレスポンスを約 1/10 に圧縮、件数のみ取得する count モードにも対応。
 
-| パラメータ          | 型       | 必須 | デフォルト | 説明                                          |
-| ------------------- | -------- | ---- | ---------- | --------------------------------------------- |
-| `data_source_id`    | string   | Yes  | -          | データソース ID                               |
-| `filter`            | object   | No   | -          | Notion API フィルタオブジェクト               |
-| `sorts`             | object[] | No   | -          | ソート条件の配列                              |
-| `page_size`         | number   | No   | `100`      | 1 ページあたりの取得件数（最大 100）          |
-| `start_cursor`      | string   | No   | -          | ページネーションカーソル                      |
-| `filter_properties` | string[] | No   | -          | 取得するプロパティ ID（トークン効率が上がる） |
+| パラメータ          | 型       | 必須 | デフォルト  | 説明                                                           |
+| ------------------- | -------- | ---- | ----------- | -------------------------------------------------------------- |
+| `data_source_id`    | string   | Yes  | -           | データソース ID                                                |
+| `filter`            | object   | No   | -           | Notion API フィルタオブジェクト                                |
+| `sorts`             | object[] | No   | -           | ソート条件の配列                                               |
+| `page_size`         | number   | No   | `100`       | 1 ページあたりの取得件数（最大 100）                           |
+| `start_cursor`      | string   | No   | -           | ページネーションカーソル                                       |
+| `filter_properties` | string[] | No   | -           | 取得するプロパティ（名前でも ID でも指定可。トークン効率向上） |
+| `compact`           | boolean  | No   | `false`     | メタデータ除外+プロパティフラット化で圧縮                      |
+| `output_mode`       | string   | No   | `"results"` | `"results"`: ページ一覧 / `"count"`: 件数のみ                  |
 
 ### `get-data-source-schema` -- スキーマ取得
 
@@ -57,6 +59,49 @@
 | ---------- | -------- | ---- | -------------------------------------------------------- |
 | `updates`  | object[] | Yes  | 更新リスト（最大 50 件）。各要素に page_id と properties |
 
+### `find-by-unique-id` -- unique_id 検索
+
+unique_id（自動採番 ID）でデータベース内のページを 1 件取得します。完全一致で 100% 正確。
+
+| パラメータ        | 型      | 必須 | デフォルト | 説明                                           |
+| ----------------- | ------- | ---- | ---------- | ---------------------------------------------- |
+| `data_source_id`  | string  | Yes  | -          | データソース ID                                |
+| `unique_id`       | string  | Yes  | -          | `"TASK-255"` や `"SPEC-12"` のような ID 文字列 |
+| `compact`         | boolean | No   | `false`    | プロパティフラット化                           |
+| `include_content` | boolean | No   | `false`    | ページ本文（Markdown）も返す                   |
+
+### `modify-relation` -- リレーション変更
+
+リレーションプロパティにページを追加・削除します。既存値を自動取得して差分更新するため、上書きリスクがありません。
+
+| パラメータ   | 型       | 必須 | 説明                                           |
+| ------------ | -------- | ---- | ---------------------------------------------- |
+| `page_id`    | string   | Yes  | 対象ページ ID                                  |
+| `property`   | string   | Yes  | リレーションプロパティ名                       |
+| `add_ids`    | string[] | No   | 追加するページ ID の配列（重複は自動スキップ） |
+| `remove_ids` | string[] | No   | 削除するページ ID の配列                       |
+
+> `add_ids` または `remove_ids` のどちらか 1 つ以上が必須。両方同時指定も可能。
+
+### `append-content` -- ページ末尾に追記
+
+ページ末尾に Markdown コンテンツを追記します。既存コンテンツには一切触れません。
+
+| パラメータ | 型     | 必須 | 説明                         |
+| ---------- | ------ | ---- | ---------------------------- |
+| `page_id`  | string | Yes  | 対象ページ ID                |
+| `content`  | string | Yes  | 追記する Markdown コンテンツ |
+
+### `batch-fetch-pages` -- 複数ページ一括取得
+
+複数ページの詳細を一括取得します。レート制限（3req/s）を考慮して順次実行。
+
+| パラメータ        | 型       | 必須 | デフォルト | 説明                           |
+| ----------------- | -------- | ---- | ---------- | ------------------------------ |
+| `page_ids`        | string[] | Yes  | -          | ページ ID の配列（最大 50 件） |
+| `compact`         | boolean  | No   | `false`    | プロパティフラット化           |
+| `include_content` | boolean  | No   | `false`    | ページ本文（Markdown）も返す   |
+
 ## セットアップ
 
 ### 1. Notion Internal Integration の作成
@@ -65,8 +110,8 @@
 2. 「新しいインテグレーション」をクリック
 3. 名前を入力し、対象ワークスペースを選択
 4. 必要な権限を設定:
-   - **コンテンツを読み取る**: query-database, get-data-source-schema に必要
-   - **コンテンツを更新する**: update-data-source-schema, archive-page, batch-update-pages に必要
+   - **コンテンツを読み取る**: query-database, get-data-source-schema, find-by-unique-id, batch-fetch-pages に必要
+   - **コンテンツを更新する**: update-data-source-schema, archive-page, batch-update-pages, modify-relation, append-content に必要
 5. 「保存」をクリックし、表示されるトークン（`ntn_` で始まる）をコピー
 
 ### 2. データベースへのアクセス許可
@@ -163,11 +208,26 @@ pnpm format:check   # フォーマットチェック
 # スキーマ取得
 pnpm dev:tool get_data_source_schema --data_source_id "ds-xxx"
 
-# データベースクエリ
-pnpm dev:tool query_database --data_source_id "ds-xxx" --page_size 10
+# データベースクエリ（compact モード）
+pnpm dev:tool query_database --data_source_id "ds-xxx" --compact true --page_size 10
 
 # フィルタ付きクエリ
 pnpm dev:tool query_database --data_source_id "ds-xxx" --filter '{"property": "Status", "select": {"equals": "Done"}}'
+
+# 件数のみ取得
+pnpm dev:tool query_database --data_source_id "ds-xxx" --output_mode count
+
+# unique_id で検索
+pnpm dev:tool find_by_unique_id --data_source_id "ds-xxx" --unique_id "TASK-255" --compact true
+
+# ページ末尾に追記
+pnpm dev:tool append_content --page_id "page-xxx" --content "## 追記セクション"
+
+# リレーション追加
+pnpm dev:tool modify_relation --page_id "page-xxx" --property "関連" --add_ids '["target-page-id"]'
+
+# 複数ページ一括取得
+pnpm dev:tool batch_fetch_pages --page_ids '["page-1", "page-2"]' --compact true
 
 # スキーマ更新
 pnpm dev:tool update_data_source_schema --data_source_id "ds-xxx" --properties '{"NewProp": {"rich_text": {}}}'
